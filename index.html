@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0,
+               user-scalable=no,
+               viewport-fit=cover">
+<title>ピアノと生き物</title>
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #a3d6cc;
+    touch-action: manipulation;
+    user-select: none;
+    
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+.white-key,
+.black-key,
+.octave-btn,
+.sharp-octave-btn,
+img {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+}
+
+.top-image{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    
+    width: min(220px, 40vw);  /* ★画面依存にする */
+    
+    top: 2vh; /* ★固定じゃなく画面比率 */
+    
+    z-index:10;
+    pointer-events:none;
+}
+
+.piano {
+    position: absolute;
+    bottom: max(5vh, 20px);
+    width:100%;
+    display:flex;
+    justify-content:center;
+}
+.piano {
+    gap: 1.5px; /* ★キーがくっつく問題を解決 */
+}
+
+.key-group{
+    position:relative;
+    width:72px;
+    height:180px;
+}
+
+.white-key{
+    position:absolute;
+    width:72px;
+    height:72px;
+    background:#f2f2f2;
+    border-radius:18px;
+    top:54px;
+    z-index:1;
+}
+
+.black-key{
+    position:absolute;
+    width:72px;
+    height:72px;
+    background:#53727d;
+    border-radius:18px;
+    top:0;
+    left:36px;
+    z-index:3;
+}
+
+.octave-btn,
+.sharp-octave-btn{
+    position:absolute;
+    width:72px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:28px;
+    font-weight:bold;
+    z-index:5;
+}
+
+.octave-up{ top:-48px; left:0; }
+.octave-down{ top:134px; left:0; }
+.sharp-octave-up{ top:-96px; left:36px; }
+.sharp-octave-down{ top:182px; left:36px; }
+
+.no-sharp .sharp-octave-btn{ display:none; }
+
+.white-key.active,
+.black-key.active{
+    transform:scale(0.96);
+}
+
+.octave-btn.active,
+.sharp-octave-btn.active{
+    color:#ffb347;
+    transform:scale(0.9);
+}
+
+.white-key,
+.black-key,
+.octave-btn,
+.sharp-octave-btn{
+    transition:0.08s;
+}
+
+/* =========================
+   RESPONSIVE SCALE FIX
+========================= */
+:root{
+    --scale: 1;
+}
+
+html, body {
+    height: 100%;
+}
+
+.piano{
+    transform: scale(var(--scale));
+    transform-origin: bottom center;
+}
+
+/* 画面サイズで自動スケール */
+@media (max-width: 700px){
+    :root{ --scale: 0.85; }
+}
+
+@media (max-width: 500px){
+    :root{ --scale: 0.7; }
+}
+
+@media (max-width: 380px){
+    :root{ --scale: 0.6; }
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+<img class="top-image" id="img" src="idle1.png">
+
+<div class="piano">
+
+<div class="key-group">
+    <div class="sharp-octave-btn sharp-octave-up" data-freq="554.37">・</div>
+    <div class="octave-btn octave-up" data-freq="523.25">・</div>
+    <div class="black-key" data-freq="277.18"></div>
+    <div class="white-key" data-freq="261.63"></div>
+    <div class="octave-btn octave-down" data-freq="130.81">・</div>
+    <div class="sharp-octave-btn sharp-octave-down" data-freq="138.59">・</div>
+</div>
+
+<div class="key-group">
+    <div class="sharp-octave-btn sharp-octave-up" data-freq="622.25">・</div>
+    <div class="octave-btn octave-up" data-freq="587.33">・</div>
+    <div class="black-key" data-freq="311.13"></div>
+    <div class="white-key" data-freq="293.66"></div>
+    <div class="octave-btn octave-down" data-freq="146.83">・</div>
+    <div class="sharp-octave-btn sharp-octave-down" data-freq="155.56">・</div>
+</div>
+
+<div class="key-group no-sharp">
+    <div class="octave-btn octave-up" data-freq="659.25">・</div>
+    <div class="white-key" data-freq="329.63"></div>
+    <div class="octave-btn octave-down" data-freq="164.81">・</div>
+</div>
+
+<div class="key-group">
+    <div class="sharp-octave-btn sharp-octave-up" data-freq="739.99">・</div>
+    <div class="octave-btn octave-up" data-freq="698.46">・</div>
+    <div class="black-key" data-freq="369.99"></div>
+    <div class="white-key" data-freq="349.23"></div>
+    <div class="octave-btn octave-down" data-freq="174.61">・</div>
+    <div class="sharp-octave-btn sharp-octave-down" data-freq="185.00">・</div>
+</div>
+
+<div class="key-group">
+    <div class="sharp-octave-btn sharp-octave-up" data-freq="830.61">・</div>
+    <div class="octave-btn octave-up" data-freq="783.99">・</div>
+    <div class="black-key" data-freq="415.30"></div>
+    <div class="white-key" data-freq="392.00"></div>
+    <div class="octave-btn octave-down" data-freq="196.00">・</div>
+    <div class="sharp-octave-btn sharp-octave-down" data-freq="207.65">・</div>
+</div>
+
+<div class="key-group">
+    <div class="sharp-octave-btn sharp-octave-up" data-freq="932.33">・</div>
+    <div class="octave-btn octave-up" data-freq="880.00">・</div>
+    <div class="black-key" data-freq="466.16"></div>
+    <div class="white-key" data-freq="440.00"></div>
+    <div class="octave-btn octave-down" data-freq="220.00">・</div>
+    <div class="sharp-octave-btn sharp-octave-down" data-freq="233.08">・</div>
+</div>
+
+<div class="key-group no-sharp">
+    <div class="octave-btn octave-up" data-freq="987.77">・</div>
+    <div class="white-key" data-freq="493.88"></div>
+    <div class="octave-btn octave-down" data-freq="246.94">・</div>
+</div>
+
+</div>
+
+<script>
+
+/* =========================
+   AUDIO
+========================= */
+let ctx, osc, gain;
+let filter = null;
+let lfo = null;
+let lfoGain = null;
+let currentElement = null;
+let lastFreq = null;
+let activeKey = null;
+
+/* ★ここ（追加場所） */
+let transitionToken = 0;
+
+/* ★ここに追加 */
+let audioReady = false;
+
+function getCtx() {
+    if (!ctx) {
+        ctx = new(window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    // ★重要：毎回安全に復帰チェック
+    if (ctx.state === "suspended") {
+        ctx.resume();
+    }
+    
+    return ctx;
+}
+
+function updateKeyVisual(el){
+    if(activeKey) activeKey.classList.remove("active");
+    activeKey = el;
+    if(activeKey) activeKey.classList.add("active");
+}
+
+/* =========================
+   IMAGE
+========================= */
+const img = document.getElementById("img");
+
+const soundImages = {
+    base: "base.png",
+    base2: "base_2.png",
+    baseBefore: "base_before.png",
+    baseAfter: "base_after.png",
+    
+    up: "up.png",
+    up2: "up_2.png",
+    upBefore: "up_before.png",
+    upAfter: "up_after.png",
+    
+    down: "down.png",
+    down2: "down_2.png",
+    downBefore: "down_before.png",
+    downAfter: "down_after.png"
+};
+
+/* =========================
+   IDLE / SPECIAL
+========================= */
+let idleFrames = ["idle1.png","idle2.png","idle3.png","idle4.png"];
+let specialFrames = [
+"special1.png","special2.png","special3.png","special4.png",
+"special5.png","special6.png","special7.png","special8.png",
+"special9.png","special10.png","special11.png","special12.png",
+"special13.png"
+];
+
+let idleIndex = 0;
+let idleLoopCount = 0;
+let showingBlink = false;
+
+let idleTimer = null;
+let specialTimer = null;
+
+let idleStartTime = Date.now();
+let isPlayingSound = false;
+
+/* =========================
+   UP STATE
+========================= */
+let currentImageState = null;
+const TIMING = {
+    loopStart: 2,
+    after: 0.05,
+    loopInterval: 200
+};
+
+let upLoopTimer = null;
+let upToggle = false;
+
+let downLoopTimer = null;
+let downToggle = false;
+
+let baseLoopTimer = null;
+let baseToggle = false;
+
+/* =========================
+   DOUBLE TAP ZOOM OFF
+========================= */
+
+let lastTouchEnd = 0;
+
+document.addEventListener(
+    "touchend",
+    function (e) {
+        const now = Date.now();
+
+        if (now - lastTouchEnd < 300) {
+            e.preventDefault();
+        }
+
+        lastTouchEnd = now;
+    },
+    { passive: false }
+);
+/* =========================
+   IDLE LOOP
+========================= */
+function startIdleLoop() {
+    stopIdle();
+    
+    if (idleRunning) return; // ★追加（重要）
+    idleRunning = true;
+    
+    idleTimer = setInterval(() => {
+        
+        if (isPlayingSound) return;
+        if (currentImageState !== null) return;
+        
+        const now = Date.now();
+        
+        if (showingBlink) {
+            img.src = "blink.png";
+            showingBlink = false;
+            return;
+        }
+        
+        img.src = idleFrames[idleIndex];
+        idleIndex++;
+        
+        if (idleIndex >= idleFrames.length) {
+            idleIndex = 0;
+            idleLoopCount++;
+            
+            if (idleLoopCount >= 5) {
+                idleLoopCount = 0;
+                showingBlink = true;
+            }
+        }
+        
+        if (now - idleStartTime >= 10000) {
+            idleStartTime = Date.now();
+            if (Math.random() < 0.5) {
+                startSpecial();
+            }
+        }
+        
+    }, 200);
+}
+
+function startSpecial(){
+    stopIdle();
+
+    let i = 0;
+
+    specialTimer = setInterval(()=>{
+
+        if(isPlayingSound){
+            stopSpecial();
+            return;
+        }
+
+        img.src = specialFrames[i++];
+        if(i >= specialFrames.length){
+            stopSpecial();
+            startIdleLoop();
+        }
+
+    },200);
+}
+
+function stopIdle(){
+    idleRunning = false;
+    
+    if(idleTimer) clearInterval(idleTimer);
+    if(specialTimer) clearInterval(specialTimer);
+    idleTimer = null;
+    specialTimer = null;
+}
+
+function stopSpecial(){
+    if(specialTimer){
+        clearInterval(specialTimer);
+        specialTimer = null;
+    }
+}
+
+function stopUpLoop() {
+    if (upLoopTimer) {
+        clearInterval(upLoopTimer);
+        upLoopTimer = null;
+    }
+}
+
+/* =========================
+   UP LOOP
+========================= */
+function startUpLoop() {
+    if (upLoopTimer) clearInterval(upLoopTimer);
+    
+    upToggle = false;
+    
+    upLoopTimer = setInterval(() => {
+    
+    if (currentImageState !== "up_loop") {
+        clearInterval(upLoopTimer);
+        upLoopTimer = null;
+        return;
+    }
+    
+    upToggle = !upToggle;
+    img.src = upToggle ? soundImages.up : soundImages.up2;
+    
+}, TIMING.loopInterval);
+}
+function startDownLoop() {
+    if (downLoopTimer) clearInterval(downLoopTimer);
+    
+    downToggle = false;
+    
+    downLoopTimer = setInterval(() => {
+        
+        if (currentImageState !== "down_loop") {
+            clearInterval(downLoopTimer);
+            downLoopTimer = null;
+            return;
+        }
+        
+        downToggle = !downToggle;
+        img.src = downToggle ? soundImages.down : soundImages.down2;
+        
+    }, 200);
+}
+function startBaseLoop() {
+    if (baseLoopTimer) clearInterval(baseLoopTimer);
+    
+    baseToggle = false;
+    
+    baseLoopTimer = setInterval(() => {
+        
+        if (currentImageState !== "base_loop") {
+            clearInterval(baseLoopTimer);
+            baseLoopTimer = null;
+            return;
+        }
+        
+        baseToggle = !baseToggle;
+        img.src = baseToggle ? soundImages.base : soundImages.base2;
+        
+    }, 200);
+}
+
+function stopBaseLoop() {
+    if (baseLoopTimer) {
+        clearInterval(baseLoopTimer);
+        baseLoopTimer = null;
+    }
+}
+function stopDownLoop() {
+    if (downLoopTimer) {
+        clearInterval(downLoopTimer);
+        downLoopTimer = null;
+    }
+}
+
+function hardResetImageState() {
+    stopUpLoop();
+    stopDownLoop();
+    stopBaseLoop();
+    
+    currentImageState = null;
+    isPlayingSound = false;
+}
+
+/* =========================
+   IMAGE CONTROL
+========================= */
+function updateImage(el) {
+    
+    if (!el) {
+        isPlayingSound = false;
+        
+        const wasUp = currentImageState === "up_loop";
+        const wasDown = currentImageState === "down_loop";
+        const wasBase = currentImageState === "base_loop";
+        
+        stopUpLoop();
+        stopDownLoop();
+        stopBaseLoop();
+        
+        transitionToken++;
+        const token = transitionToken;
+        
+        let afterImg = soundImages.baseAfter;
+        
+        if (wasUp) afterImg = soundImages.upAfter;
+        if (wasDown) afterImg = soundImages.downAfter;
+        if (wasBase) afterImg = soundImages.baseAfter;
+        
+        currentImageState = "leaving";
+        img.src = afterImg;
+        
+        setTimeout(() => {
+    currentImageState = null;
+    isPlayingSound = false;
+    
+    if (!idleRunning) { // ★追加
+        startIdleLoop();
+    }
+}, TIMING.after);
+        
+        return;
+    }
+    
+    stopIdle();
+    isPlayingSound = true;
+    
+    const isUp =
+        el.classList.contains("octave-up") ||
+        el.classList.contains("sharp-octave-up");
+    
+    const isDown =
+        el.classList.contains("octave-down") ||
+        el.classList.contains("sharp-octave-down");
+    
+    stopUpLoop();
+    stopDownLoop();
+    stopBaseLoop();
+    
+    transitionToken++;
+    const token = transitionToken;
+    
+    /* =========================
+       UP
+    ========================= */
+    if (isUp) {
+        
+        currentImageState = "up_enter";
+        img.src = soundImages.upBefore;
+        
+        setTimeout(() => {
+    if (token !== transitionToken) return;
+    
+    currentImageState = "up_loop";
+    startUpLoop();
+}, TIMING.loopStart);
+        
+        return;
+    }
+    
+    /* =========================
+       DOWN
+    ========================= */
+    if (isDown) {
+        
+        currentImageState = "down_enter";
+        img.src = soundImages.downBefore;
+        
+        setTimeout(() => {
+            if (token !== transitionToken) return;
+    currentImageState = "down_loop";
+    startDownLoop();
+}, TIMING.loopStart);
+        
+        return;
+    }
+    
+    /* =========================
+       BASE
+    ========================= */
+    
+    currentImageState = "base_enter";
+    img.src = soundImages.baseBefore;
+    
+setTimeout(() => {
+    if (token !== transitionToken) return;
+    
+    currentImageState = "base_loop";
+    startBaseLoop();
+}, TIMING.loopStart);
+    return;
+}
+
+/* =========================
+   AUDIO
+========================= */
+function stop() {
+    
+    if (osc) {
+        try { osc.stop(); } catch (e) {}
+        osc.disconnect();
+        osc = null;
+    }
+    
+    if (lfo) {
+    try { lfo.stop(); } catch (e) {}
+    lfo.disconnect();
+    lfo = null;
+}
+
+if (lfoGain) {
+    lfoGain.disconnect();
+    lfoGain = null;
+}
+
+if (filter) {
+    filter.disconnect();
+    filter = null;
+}
+    
+    if (gain) {
+        gain.disconnect();
+        gain = null;
+    }
+    
+    lastFreq = null;
+    updateKeyVisual(null);
+    
+    hardResetImageState(); // ★追加（重要）
+    
+    updateImage(null);
+}
+
+function play(freq) {
+    
+    const audio = getCtx();
+    
+    if (audio.state === "suspended") {
+        audio.resume();
+    }
+    
+    if (osc) {
+    
+    osc.frequency.setTargetAtTime(
+        freq,
+        audio.currentTime,
+        0.02
+    );
+    
+    lastFreq = freq;
+    
+    currentElement = document.elementFromPoint(lastX, lastY);
+    
+    updateImage(currentElement);
+    updateKeyVisual(currentElement);
+    
+    return;
+}
+    
+    osc = audio.createOscillator();
+gain = audio.createGain();
+filter = audio.createBiquadFilter();
+lfo = audio.createOscillator();
+lfoGain = audio.createGain();
+    
+    // =========================
+    // 基本音（発音条件は変更なし）
+    // =========================
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    
+    // =========================
+    // 音色フィルタ（やわらかくするだけ）
+    // =========================
+    filter.type = "lowpass";
+    filter.frequency.value = 1800;
+    filter.Q.value = 0.8;
+    
+    // =========================
+    // 音量（長さは変えない）
+    // =========================
+    gain.gain.setValueAtTime(0.001, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.07, audio.currentTime + 0.01);
+    gain.gain.setValueAtTime(0.07, audio.currentTime + 0.02);
+    
+    // =========================
+    // 微ビブラート（かなり弱め）
+    // =========================
+    lfo.type = "sine";
+    lfo.frequency.value = 6.5;
+    
+    let vibStrength = 0;
+
+// 低音ほど弱く、高音ほど少し強く
+vibStrength = 18 * (freq / 1000);
+
+// 暴れ防止（最小・最大）
+vibStrength = Math.max(2, Math.min(18, vibStrength));
+
+lfoGain.gain.value = vibStrength;
+    
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    
+    // =========================
+    // 接続
+    // =========================
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audio.destination);
+    
+    osc.start();
+    lfo.start();
+    
+    lastFreq = freq;
+    
+    currentElement = document.elementFromPoint(lastX, lastY);
+    
+    updateImage(currentElement);
+    updateKeyVisual(currentElement);
+}
+
+/* =========================
+   INPUT
+========================= */
+let down = false;
+let lastX = 0;
+let lastY = 0;
+
+function getEl(e){
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    const el = document.elementFromPoint(lastX,lastY);
+    if(!el || !el.dataset.freq) return null;
+
+    currentElement = el;
+    return el;
+}
+
+document.addEventListener("pointerdown", e => {
+            down = true;
+            
+            const audio = getCtx(); // ★これを必ず先に作る
+            
+            if (audio.state === "suspended") {
+                audio.resume();
+            }
+    
+    // ★追加（超重要）
+    if (!audioReady) {
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        
+        gain.gain.value = 0;
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        
+        osc.start();
+        osc.stop(audio.currentTime + 0.01);
+        
+        audioReady = true;
+    }
+    
+    const el = getEl(e);
+    if (el) play(Number(el.dataset.freq));
+});
+
+document.addEventListener("pointermove", e=>{
+    if(!down) return;
+
+    const el = getEl(e);
+    if(!el) return;
+
+    const f = Number(el.dataset.freq);
+    if(f === lastFreq) return;
+
+    lastFreq = f;
+    play(f);
+});
+
+document.addEventListener("pointerup", ()=>{
+    down = false;
+    stop();
+});
+
+document.addEventListener("pointercancel", ()=>{
+    down = false;
+    stop();
+});
+
+/* =========================
+   START
+========================= */
+startIdleLoop();
+
+</script>
+</body>
+</html>
