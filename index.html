@@ -244,7 +244,7 @@ let audioReady = false;
 
 function getCtx() {
     if (!ctx) {
-        ctx = new(window.AudioContext || window.webkitAudioContext)();
+        ctx = new (window.AudioContext || window.webkitAudioContext)();
     }
     
     // ★重要：毎回安全に復帰チェック
@@ -300,6 +300,8 @@ let showingBlink = false;
 
 let idleTimer = null;
 let specialTimer = null;
+
+let idleRunning = false;
 
 let idleStartTime = Date.now();
 let isPlayingSound = false;
@@ -528,24 +530,19 @@ function updateImage(el) {
         stopBaseLoop();
         
         transitionToken++;
-        const token = transitionToken;
-        
-        let afterImg = soundImages.baseAfter;
-        
-        if (wasUp) afterImg = soundImages.upAfter;
-        if (wasDown) afterImg = soundImages.downAfter;
-        if (wasBase) afterImg = soundImages.baseAfter;
-        
-        currentImageState = "leaving";
-        img.src = afterImg;
-        
-        setTimeout(() => {
+const token = transitionToken;
+
+setTimeout(() => {
+    
+    if (token !== transitionToken) return;
+    
     currentImageState = null;
     isPlayingSound = false;
     
-    if (!idleRunning) { // ★追加
+    if (!idleRunning) {
         startIdleLoop();
     }
+    
 }, TIMING.after);
         
         return;
@@ -764,6 +761,8 @@ let lastY = 0;
 // ★追加
 const activePointers = new Map();
 
+const activeKeys = new Map();
+
 function getEl(e){
     lastX = e.clientX;
     lastY = e.clientY;
@@ -776,8 +775,10 @@ function getEl(e){
 }
 
 document.addEventListener("pointerdown", e => {
-    
-    down = true;
+            
+            e.preventDefault();
+            
+            down = true;
     
     activePointers.set(e.pointerId, {
         x: e.clientX,
@@ -810,11 +811,17 @@ document.addEventListener("pointerdown", e => {
 lastY = e.clientY;
     
     const el = document.elementFromPoint(e.clientX, e.clientY);
+
+if (el && el.dataset.freq) {
     
-    if (el && el.dataset.freq) {
-        play(Number(el.dataset.freq));
-    }
+    activeKeys.set(
+        e.pointerId,
+        el
+    );
     
+    lastFreq = null;
+    play(Number(el.dataset.freq));
+}
 });
 
 document.addEventListener("pointermove", e => {
@@ -844,6 +851,8 @@ lastY = e.clientY;
 document.addEventListener("pointerup", e => {
     
     activePointers.delete(e.pointerId);
+    activeKeys.delete(e.pointerId);
+    
     
     if (activePointers.size === 0) {
         
@@ -853,14 +862,22 @@ document.addEventListener("pointerup", e => {
         
     }
     
-    // 最後に押された指
-    const last = [...activePointers.values()].pop();
     
-    const el = document.elementFromPoint(last.x, last.y);
+    // 残っている指を探す
+    const remaining = [...activePointers.keys()]
+    .map(id => activeKeys.get(id))
+    .filter(Boolean)
+    .pop();
     
-    if (el && el.dataset.freq) {
+    
+    if (remaining) {
         
-        play(Number(el.dataset.freq));
+        lastFreq = null;
+        
+        play(Number(remaining.dataset.freq));
+        
+        updateImage(remaining);
+        updateKeyVisual(remaining);
         
     }
     
@@ -870,6 +887,8 @@ document.addEventListener("pointercancel", e => {
     
     activePointers.delete(e.pointerId);
     
+    activeKeys.delete(e.pointerId);
+    
     if (activePointers.size === 0) {
         
         down = false;
@@ -883,10 +902,10 @@ document.addEventListener("pointercancel", e => {
     const el = document.elementFromPoint(last.x, last.y);
     
     if (el && el.dataset.freq) {
-        
-        play(Number(el.dataset.freq));
-        
-    }
+    play(Number(el.dataset.freq));
+} else {
+    stop();
+}
     
 });
 
@@ -895,6 +914,36 @@ document.addEventListener("pointercancel", e => {
 ========================= */
 startIdleLoop();
 
+[
+    "idle1.png",
+    "idle2.png",
+    "base.png",
+    "base_2.png",
+    "base_before.png",
+    "up.png",
+    "up_2.png",
+    "up_before.png",
+    "down.png",
+    "down_2.png",
+    "down_before.png",
+    "blink.png",
+    "special1.png",
+    "special2.png",
+    "special3.png",
+    "special4.png",
+    "special5.png",
+    "special6.png",
+    "special7.png",
+    "special8.png",
+    "special9.png",
+    "special10.png",
+    "special11.png",
+    "special12.png",
+    "special13.png"
+].forEach(src => {
+    const i = new Image();
+    i.src = src;
+});
 </script>
 </body>
 </html>
